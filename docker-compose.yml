@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Servizio per il backend NestJS
+  backend:
+    build: . # Costruisce l'immagine usando il Dockerfile nella directory corrente
+    container_name: auto2g-api
+    ports:
+      - "3000:3000" # Mappa la porta 3000 del container alla porta 3000 del server
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/auto2g?schema=public
+      # Aggiungi qui altre variabili d'ambiente (JWT_SECRET, etc.)
+    depends_on:
+      - db # Fa in modo che il backend si avvii solo dopo il database
+    restart: unless-stopped
+
+  # Servizio per il database PostgreSQL
+  db:
+    image: postgres:14-alpine
+    container_name: auto2g-db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=auto2g
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Rende i dati persistenti
+    ports:
+      - "5432:5432" # Espone la porta del DB (utile per il debug, puoi rimuoverla in prod)
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
