@@ -1,0 +1,7 @@
+cors:
+  allowedHosts:
+    - 'https://auto2g.it/'
+    - 'http://localhost:5173'
+    - 'http://localhost:3000'
+
+port: 3000
