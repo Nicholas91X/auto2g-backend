@@ -19,6 +19,10 @@ async function bootstrap() {
     prefix: "/public/profile-pictures/",
   })
 
+  app.useStaticAssets(join(process.cwd(), "uploads", "auto_usata"), {
+    prefix: "/public/auto_usata/",
+  });
+
   app.use(express.urlencoded({ limit: "50mb", extended: true }))
 
   const settings = configuration()

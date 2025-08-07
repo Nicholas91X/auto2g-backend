@@ -43,15 +43,32 @@ enum AccountRole {
 }
 
 model AutoUsata {
-  id          Int      @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   marca       String
   modello     String
-  targa       String   @unique
+  targa       String          @unique
   anno        Int
   prezzo      Float
   km          Int
-  immagine    String?
   descrizione String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  stato       AutoUsataStatus @default(DISPONIBILE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  immagini    ImmagineAuto[]
+}
+
+enum AutoUsataStatus {
+  DISPONIBILE
+  VENDUTA
+  IN_ARRIVO
+  IN_TRATTATIVA
+  IN_RIPARAZIONE
+}
+
+model ImmagineAuto {
+  id          Int       @id @default(autoincrement())
+  url         String
+  autoUsata   AutoUsata @relation(fields: [autoUsataId], references: [id], onDelete: Cascade)
+  autoUsataId Int
+  createdAt   DateTime  @default(now())
 }
