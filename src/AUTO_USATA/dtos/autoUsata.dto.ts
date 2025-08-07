@@ -1,8 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { Expose, Type } from "class-transformer"
 import { ImmagineAutoDto } from "./immagineAutoUsata.dto"
-import { AutoUsataStatus } from "@prisma/client"
+import { AutoUsataStatus, Carburante, TipoDiCambio, Trazione } from "@prisma/client"
 import { AutoUsataStatusEnum } from "../enums/autoUsataStatusEnum"
+import { TipoCarburanteEnum } from "../enums/tipoCarburanteEnum"
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString } from "class-validator"
+import { TipoCambioEnum } from "../enums/tipoCambioEnum"
+import { TipoTrazioneEnum } from "../enums/tipoTrazioneEnum"
 
 export class AutoUsataDto {
   @Expose()
@@ -46,6 +50,86 @@ export class AutoUsataDto {
   immagini: ImmagineAutoDto[];
 
   @Expose()
-  @ApiProperty({ example: "Bellissima Fiat 500 come nuova", required: false })
-  descrizione: string | null;
+  @ApiPropertyOptional()
+  carburante?: Carburante
+
+  @Expose()
+  @ApiPropertyOptional()
+  cilindrata?: number
+
+  @Expose()
+  @ApiPropertyOptional()
+  potenzaCV?: number
+
+  @Expose()
+  @ApiPropertyOptional()
+  potenzaKW?: number
+
+  @Expose()
+  @ApiPropertyOptional()
+  tipoDiCambio?: TipoDiCambio
+
+  @Expose()
+  @ApiPropertyOptional()
+  trazione?: Trazione
+
+  @Expose()
+  @ApiPropertyOptional()
+  classeEmissione?: string
+
+  @Expose()
+  @ApiPropertyOptional()
+  coloreEsterno?: string
+
+  @Expose()
+  @ApiPropertyOptional()
+  numeroPorte?: number
+
+  @Expose()
+  @ApiPropertyOptional()
+  numeroPosti?: number
+
+  @Expose()
+  @ApiPropertyOptional()
+  descrizione?: string
+
+  @Expose()
+  @ApiPropertyOptional()
+  noteOptional?: string
+
+  @Expose()
+  @ApiPropertyOptional()
+  abs?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  airbag?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  climatizzatore?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  servosterzo?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  navigatore?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  sensoriParcheggio?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  cruiseControl?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  interniInPelle?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  cerchiInLega?: boolean
 }

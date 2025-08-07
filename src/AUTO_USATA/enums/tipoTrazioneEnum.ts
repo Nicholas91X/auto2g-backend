@@ -1,0 +1,5 @@
+export enum TipoTrazioneEnum {
+  ANTERIORE = "ANTERIORE",
+  POSTERIORE = "POSTERIORE",
+  INTEGRALE = "INTEGRALE",
+}

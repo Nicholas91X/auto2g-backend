@@ -44,14 +44,59 @@ enum AccountRole {
   OTHER
 }
 
+enum Carburante {
+  BENZINA
+  DIESEL
+  GPL
+  METANO
+  IBRIDA
+  ELETTRICA
+}
+
+enum TipoDiCambio {
+  MANUALE
+  AUTOMATICO
+}
+
+enum Trazione {
+  ANTERIORE
+  POSTERIORE
+  INTEGRALE
+}
+
 model AutoUsata {
-  id          Int             @id @default(autoincrement())
-  marca       String
-  modello     String
-  targa       String          @unique
-  anno        Int
-  prezzo      Float
-  km          Int
+  id      Int    @id @default(autoincrement())
+  marca   String
+  modello String
+  targa   String @unique
+  anno    Int
+  prezzo  Float
+  km      Int
+
+  // --- DATI TECNICI ---
+  carburante      Carburante?
+  cilindrata      Int?
+  potenzaCV       Int?
+  potenzaKW       Int?
+  tipoDiCambio    TipoDiCambio?
+  trazione        Trazione?
+  classeEmissione String?
+  coloreEsterno   String?
+  numeroPorte     Int?
+  numeroPosti     Int?
+
+  // --- CARATTERISTICHE E OPTIONAL ---
+  abs               Boolean @default(false)
+  airbag            Boolean @default(false)
+  climatizzatore    Boolean @default(false)
+  servosterzo       Boolean @default(false)
+  navigatore        Boolean @default(false)
+  sensoriParcheggio Boolean @default(false)
+  cruiseControl     Boolean @default(false)
+  interniInPelle    Boolean @default(false)
+  cerchiInLega      Boolean @default(false)
+  noteOptional      String?
+
   descrizione String?
   stato       AutoUsataStatus @default(DISPONIBILE)
   createdAt   DateTime        @default(now())
