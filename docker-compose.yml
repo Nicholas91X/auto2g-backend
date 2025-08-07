@@ -12,6 +12,7 @@ services:
       - ./jwt-keys:/app/jwt-keys
       - ./config:/app/config
       - a2g_uploads:/app/uploads
+    command: sh -c "npx prisma migrate deploy && node dist/main.js"
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/auto2g?schema=public
     depends_on:
