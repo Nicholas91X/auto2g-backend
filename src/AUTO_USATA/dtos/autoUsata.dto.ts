@@ -2,7 +2,6 @@ import { ApiProperty } from "@nestjs/swagger"
 import { Expose, Type } from "class-transformer"
 import { ImmagineAutoDto } from "./immagineAutoUsata.dto"
 import { AutoUsataStatus } from "@prisma/client"
-import { IsEnum } from "class-validator"
 import { AutoUsataStatusEnum } from "../enums/autoUsataStatusEnum"
 
 export class AutoUsataDto {
@@ -39,8 +38,7 @@ export class AutoUsataDto {
     enum: AutoUsataStatusEnum,
     example: AutoUsataStatusEnum.DISPONIBILE,
   })
-  @IsEnum(AutoUsataStatusEnum)
-  status: AutoUsataStatus
+  stato: AutoUsataStatus
 
   @Expose()
   @ApiProperty({ type: [ImmagineAutoDto] })

@@ -4,7 +4,7 @@ import { Transform } from "class-transformer"
 
 export class AccountLoginDto {
   @ApiProperty({
-    example: "account@example.com",
+    example: "romitinicholas91hotmail.it",
     description: "Email dell'account per il login",
   })
   @IsEmail()
@@ -12,7 +12,7 @@ export class AccountLoginDto {
   email: string
 
   @ApiProperty({
-    example: "yourSecurePassword123!",
+    example: "nico84397",
     description: "Password dell'account",
   })
   @IsString()

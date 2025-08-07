@@ -9,6 +9,8 @@ import { AutoUsataDto } from "../dtos/autoUsata.dto"
 import { CreateAutoUsataDto } from "../dtos/createAutoUsata.dto"
 import { UpdateAutoUsataDto } from "../dtos/updateAutoUsata.dto"
 import { ImmagineAutoRepository } from "../repositories/immagineAuto.repository"
+import { UpdateAutoUsataStatoDto } from "../dtos/updateAutoUsataStatus.dto"
+import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
 
 @Injectable()
 export class AutoUsataService {
@@ -95,5 +97,25 @@ export class AutoUsataService {
     }
 
     await this.immagineAutoRepo.removeManyByAutoId(autoId);
+  }
+
+  async updateStato(
+    id: number,
+    dto: UpdateAutoUsataStatoDto,
+  ): Promise<AutoUsataDto> {
+    await this.findOne(id);
+    const autoAggiornata = await this.autoUsataRepo.update(id, {
+      stato: dto.stato,
+    });
+    return plainToInstance(AutoUsataDto, autoAggiornata, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findAllFiltered(filtri: FiltroAutoUsataDto): Promise<AutoUsataDto[]> {
+    const auto = await this.autoUsataRepo.findAllFiltered(filtri);
+    return plainToInstance(AutoUsataDto, auto, {
+      excludeExtraneousValues: true,
+    });
   }
 }

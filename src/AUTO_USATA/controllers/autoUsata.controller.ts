@@ -6,9 +6,9 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
+  ParseIntPipe, Patch,
   Post,
-  Put,
+  Put, Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -29,11 +29,24 @@ import { AutoUsataService } from "../services/autoUsata.service"
 import { AutoUsataDto } from "../dtos/autoUsata.dto"
 import { CreateAutoUsataDto } from "../dtos/createAutoUsata.dto"
 import { UpdateAutoUsataDto } from "../dtos/updateAutoUsata.dto"
+import { UpdateAutoUsataStatoDto } from "../dtos/updateAutoUsataStatus.dto"
+import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
 
 @ApiTags("Auto Usata")
 @Controller("auto-usata")
 export class AutoUsataController {
   constructor(private readonly autoUsataService: AutoUsataService) {}
+
+  @Get("filtered")
+  @ApiOperation({
+    summary: "Recupera la lista di tutte le auto usate con filtri",
+  })
+  @ApiResponse({ status: 200, type: [AutoUsataDto] })
+  findAllFiltered(
+    @Query() filtri: FiltroAutoUsataDto,
+  ): Promise<AutoUsataDto[]> {
+    return this.autoUsataService.findAllFiltered(filtri);
+  }
 
   @Get()
   @ApiOperation({ summary: "Recupera la lista di tutte le auto usate" })
@@ -163,4 +176,25 @@ export class AutoUsataController {
   deleteAllImmagini(@Param("id", ParseIntPipe) id: number): Promise<void> {
     return this.autoUsataService.deleteAllImmagini(id)
   }
+
+  @Patch(":id/stato")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Aggiorna lo stato di un'auto usata (solo Admin/Seller)",
+  })
+  @ApiResponse({ status: 200, type: AutoUsataDto })
+  @ApiResponse({ status: 404, description: "Auto non trovata" })
+  updateStato(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() dto: UpdateAutoUsataStatoDto,
+  ): Promise<AutoUsataDto> {
+    return this.autoUsataService.updateStato(id, dto);
+  }
+
 }
