@@ -10,6 +10,9 @@ import {
 import { CreateVenditaDto } from "../dtos/createVendita.dto"
 import { Prisma, Vendita } from "@prisma/client"
 import { AutoUsataStatus } from "@prisma/client"
+import { UpdateVenditaDto } from "../dtos/updateVendita.dto"
+import { VenditaDto } from "../dtos/vendita.dto"
+import { plainToInstance } from "class-transformer"
 
 @Injectable()
 export class VenditaService {
@@ -39,7 +42,6 @@ export class VenditaService {
       datiVendita.acquirenteId = acquirente.id
       datiVendita.acquirenteNomeCognome = `${acquirente.name} ${acquirente.surname}`
       if (dto.acquirenteInfo) datiVendita.acquirenteInfo = dto.acquirenteInfo
-
     } else {
       if (!dto.acquirenteNomeCognome) {
         throw new BadRequestException(
@@ -57,5 +59,41 @@ export class VenditaService {
     })
 
     return vendita
+  }
+
+  async findAll(): Promise<VenditaDto[]> {
+    const vendite = await this.venditaRepo.findAll()
+    return plainToInstance(VenditaDto, vendite, {
+      excludeExtraneousValues: true,
+    })
+  }
+
+  async findOne(id: number): Promise<VenditaDto> {
+    const vendita = await this.venditaRepo.findById(id)
+    if (!vendita) {
+      throw new NotFoundException("Vendita non trovata.")
+    }
+    return plainToInstance(VenditaDto, vendita, {
+      excludeExtraneousValues: true,
+    })
+  }
+
+  async update(id: number, dto: UpdateVenditaDto): Promise<VenditaDto> {
+    await this.findOne(id)
+    const vendita = await this.venditaRepo.update(id, dto)
+    return this.findOne(vendita.id)
+  }
+
+  async remove(id: number): Promise<void> {
+    const vendita = await this.venditaRepo.findById(id)
+    if (!vendita) {
+      throw new NotFoundException("Vendita non trovata.")
+    }
+
+    await this.autoUsataRepo.update(vendita.autoId, {
+      stato: AutoUsataStatus.DISPONIBILE,
+    })
+
+    await this.venditaRepo.remove(id)
   }
 }
