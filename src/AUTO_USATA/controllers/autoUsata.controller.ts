@@ -6,9 +6,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe, Patch,
+  ParseIntPipe,
+  Patch,
   Post,
-  Put, Query,
+  Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -45,7 +47,7 @@ export class AutoUsataController {
   findAllFiltered(
     @Query() filtri: FiltroAutoUsataDto,
   ): Promise<AutoUsataDto[]> {
-    return this.autoUsataService.findAllFiltered(filtri);
+    return this.autoUsataService.findAllFiltered(filtri)
   }
 
   @Get()
@@ -194,7 +196,38 @@ export class AutoUsataController {
     @Param("id", ParseIntPipe) id: number,
     @Body() dto: UpdateAutoUsataStatoDto,
   ): Promise<AutoUsataDto> {
-    return this.autoUsataService.updateStato(id, dto);
+    return this.autoUsataService.updateStato(id, dto)
   }
 
+  @Patch(":id/toggle-vetrina")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: 'Attiva/disattiva lo stato "In Vetrina" di un\'auto',
+  })
+  @ApiResponse({ status: 200, type: AutoUsataDto })
+  toggleVetrina(@Param("id", ParseIntPipe) id: number): Promise<AutoUsataDto> {
+    return this.autoUsataService.toggleFlag(id, "inVetrina")
+  }
+
+  @Patch(":id/toggle-pubblicazione")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "Pubblica/nascondi un'auto" })
+  @ApiResponse({ status: 200, type: AutoUsataDto })
+  togglePubblicazione(
+    @Param("id", ParseIntPipe) id: number,
+  ): Promise<AutoUsataDto> {
+    return this.autoUsataService.toggleFlag(id, "pubblicata")
+  }
 }

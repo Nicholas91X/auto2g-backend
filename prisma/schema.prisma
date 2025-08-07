@@ -103,6 +103,9 @@ model AutoUsata {
   updatedAt   DateTime        @updatedAt
   immagini    ImmagineAuto[]
 
+  inVetrina  Boolean @default(false)
+  pubblicata Boolean @default(true)
+
   Vendita Vendita[]
 }
 

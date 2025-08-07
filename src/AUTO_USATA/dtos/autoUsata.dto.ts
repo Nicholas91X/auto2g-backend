@@ -132,4 +132,12 @@ export class AutoUsataDto {
   @Expose()
   @ApiPropertyOptional()
   cerchiInLega?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  inVetrina?: boolean
+
+  @Expose()
+  @ApiPropertyOptional()
+  pubblicata?: boolean
 }

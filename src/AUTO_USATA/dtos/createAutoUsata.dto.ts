@@ -170,4 +170,17 @@ export class CreateAutoUsataDto {
   @IsBoolean()
   @IsOptional()
   cerchiInLega?: boolean
+
+  @ApiPropertyOptional({ description: "L'auto è in vetrina?", default: false })
+  @IsBoolean()
+  @IsOptional()
+  inVetrina?: boolean
+
+  @ApiPropertyOptional({
+    description: "L'auto è visibile pubblicamente?",
+    default: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  pubblicata?: boolean
 }

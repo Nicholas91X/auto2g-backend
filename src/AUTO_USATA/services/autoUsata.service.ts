@@ -118,4 +118,22 @@ export class AutoUsataService {
       excludeExtraneousValues: true,
     });
   }
+
+  async toggleFlag(
+    id: number,
+    flag: "inVetrina" | "pubblicata",
+  ): Promise<AutoUsataDto> {
+    const auto = await this.autoUsataRepo.findById(id);
+    if (!auto) {
+      throw new NotFoundException("Auto usata non trovata.")
+    }
+
+    const autoAggiornata = await this.autoUsataRepo.update(id, {
+      [flag]: !auto[flag],
+    });
+
+    return plainToInstance(AutoUsataDto, autoAggiornata, {
+      excludeExtraneousValues: true,
+    });
+  }
 }
