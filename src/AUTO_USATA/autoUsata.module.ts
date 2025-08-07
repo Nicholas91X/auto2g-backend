@@ -13,6 +13,7 @@ import { VenditaController } from "./controllers/vendita.controller"
 import { VenditaService } from "./services/vendita.service"
 import { VenditaRepository } from "./repositories/vendita.repository"
 import { AccountRepository } from "../ACCOUNT/repositories/account.repository"
+import { ExcelService } from "../shared/services/excel.service"
 
 @Module({
   controllers: [AutoUsataController, VenditaController],
@@ -23,6 +24,7 @@ import { AccountRepository } from "../ACCOUNT/repositories/account.repository"
     VenditaRepository,
     AccountRepository,
     ImmagineAutoRepository,
+    ExcelService,
     {
       provide: DocumentStorageServiceToken,
       useClass: LocalDocumentStorageService,

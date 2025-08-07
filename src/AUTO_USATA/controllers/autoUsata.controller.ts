@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -11,6 +12,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -33,11 +35,16 @@ import { CreateAutoUsataDto } from "../dtos/createAutoUsata.dto"
 import { UpdateAutoUsataDto } from "../dtos/updateAutoUsata.dto"
 import { UpdateAutoUsataStatoDto } from "../dtos/updateAutoUsataStatus.dto"
 import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
+import { ExcelService } from "../../shared/services/excel.service"
+import express from "express"
 
 @ApiTags("Auto Usata")
 @Controller("auto-usata")
 export class AutoUsataController {
-  constructor(private readonly autoUsataService: AutoUsataService) {}
+  constructor(
+    private readonly autoUsataService: AutoUsataService,
+    private readonly excelService: ExcelService,
+  ) {}
 
   @Get("filtered")
   @ApiOperation({
@@ -229,5 +236,71 @@ export class AutoUsataController {
     @Param("id", ParseIntPipe) id: number,
   ): Promise<AutoUsataDto> {
     return this.autoUsataService.toggleFlag(id, "pubblicata")
+  }
+
+  @Get("export/excel")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @Header(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  )
+  @Header(
+    "Content-Disposition",
+    'attachment; filename="report-auto-usate.xlsx"',
+  )
+  @ApiOperation({
+    summary: "Esporta la lista delle auto usate in formato Excel",
+  })
+  async exportToExcel(
+    @Query() filtri: FiltroAutoUsataDto,
+    @Res() res: express.Response,
+  ) {
+    const autoList = await this.autoUsataService.findAllFiltered(filtri)
+
+    const headers = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Marca", key: "marca", width: 20 },
+      { header: "Modello", key: "modello", width: 20 },
+      { header: "Targa", key: "targa", width: 15 },
+      { header: "Anno", key: "anno", width: 10 },
+      { header: "Prezzo Vendita", key: "prezzo", width: 15 },
+      { header: "Km", key: "km", width: 15 },
+      { header: "Stato", key: "stato", width: 15 },
+      { header: "Carburante", key: "carburante", width: 15 },
+      { header: "Cilindrata", key: "cilindrata", width: 15 },
+      { header: "Potenza (CV)", key: "potenzaCV", width: 15 },
+      { header: "Cambio", key: "tipoDiCambio", width: 15 },
+      { header: "Trazione", key: "trazione", width: 20 },
+      { header: "Classe Emissione", key: "classeEmissione", width: 20 },
+      { header: "Colore", key: "coloreEsterno", width: 20 },
+      { header: "Numero Porte", key: "numeroPorte", width: 2 },
+      { header: "Numero Posti", key: "numeroPosti", width: 2 },
+      { header: "Note optional", key: "noteOptional", width: 50 },
+      { header: "ABS", key: "abs", width: 5 },
+      { header: "Airbags", key: "airbag", width: 5 },
+      { header: "Climatizzatore", key: "climatizzatore", width: 5 },
+      { header: "Servo Sterzo", key: "servosterzo", width: 5 },
+      { header: "Navigatore", key: "navigatore", width: 5 },
+      { header: "Sensori Parcheggio", key: "sensoriParcheggio", width: 5 },
+      { header: "Cruise Control", key: "cruiseControl", width: 5 },
+      { header: "Interni in pelle", key: "interniInPelle", width: 5 },
+      { header: "Cerchi in lega", key: "cerchiInLega", width: 5 },
+      { header: "Vetrina", key: "inVetrina", width: 5 },
+      { header: "Pubblicata", key: "pubblicata", width: 5 },
+      { header: "Descrizione", key: "descrizione", width: 50 },
+    ]
+
+    const buffer = await this.excelService.createExcel(
+      headers,
+      autoList,
+      "Auto Usate",
+    )
+    res.send(buffer)
   }
 }
