@@ -32,6 +32,8 @@ model Account {
 
   active   Boolean @default(true)
   verified Boolean @default(false)
+
+  Vendita Vendita[]
 }
 
 enum AccountRole {
@@ -55,6 +57,8 @@ model AutoUsata {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   immagini    ImmagineAuto[]
+
+  Vendita Vendita[]
 }
 
 enum AutoUsataStatus {
@@ -71,4 +75,19 @@ model ImmagineAuto {
   autoUsata   AutoUsata @relation(fields: [autoUsataId], references: [id], onDelete: Cascade)
   autoUsataId Int
   createdAt   DateTime  @default(now())
+}
+
+model Vendita {
+  id           Int      @id @default(autoincrement())
+  dataVendita  DateTime @default(now())
+  prezzoFinale Float
+
+  auto   AutoUsata @relation(fields: [autoId], references: [id])
+  autoId Int       @unique
+
+  acquirente   Account? @relation(fields: [acquirenteId], references: [id])
+  acquirenteId Int?
+
+  acquirenteNomeCognome String
+  acquirenteInfo        String?
 }
