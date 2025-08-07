@@ -40,6 +40,12 @@ export class CreateAutoUsataDto {
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  costo: number
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   prezzo: number
 
   @ApiProperty()

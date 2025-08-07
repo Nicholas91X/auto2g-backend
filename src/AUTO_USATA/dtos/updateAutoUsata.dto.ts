@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from "@nestjs/swagger"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import {
   IsBoolean,
   IsEnum,
@@ -35,6 +35,12 @@ export class UpdateAutoUsataDto {
   @Type(() => Number)
   @IsOptional()
   anno?: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  costo: number
 
   @ApiPropertyOptional()
   @IsNumber()

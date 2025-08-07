@@ -22,4 +22,18 @@ export class DashboardController {
   getSummary() {
     return this.dashboardService.getSummary()
   }
+
+  @Get("summary/performance-marca")
+  @ApiOperation({ summary: "Recupera le performance di vendita per marca" })
+  getPerformancePerMarca() {
+    return this.dashboardService.getPerformancePerMarca()
+  }
+
+  @Get("summary/attivita-recente")
+  @ApiOperation({
+    summary: "Recupera le ultime auto aggiunte e le ultime vendite",
+  })
+  getAttivitaRecente() {
+    return this.dashboardService.getAttivitaRecente()
+  }
 }

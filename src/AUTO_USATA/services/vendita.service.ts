@@ -13,6 +13,7 @@ import { AutoUsataStatus } from "@prisma/client"
 import { UpdateVenditaDto } from "../dtos/updateVendita.dto"
 import { VenditaDto } from "../dtos/vendita.dto"
 import { plainToInstance } from "class-transformer"
+import { AutoUsataStatusEnum } from "../enums/autoUsataStatusEnum"
 
 @Injectable()
 export class VenditaService {
@@ -25,7 +26,7 @@ export class VenditaService {
   async registraVendita(dto: CreateVenditaDto): Promise<Vendita> {
     const auto = await this.autoUsataRepo.findById(dto.autoId)
     if (!auto) throw new NotFoundException("Auto non trovata.")
-    if (auto.stato === "VENDUTA")
+    if (auto.stato === AutoUsataStatusEnum.VENDUTA)
       throw new ConflictException("Questa auto è già stata venduta.")
 
     const datiVendita: Prisma.VenditaUncheckedCreateInput = {

@@ -70,6 +70,7 @@ model AutoUsata {
   modello String
   targa   String @unique
   anno    Int
+  costo   Float?
   prezzo  Float
   km      Int
 

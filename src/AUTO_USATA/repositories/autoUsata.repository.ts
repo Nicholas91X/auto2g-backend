@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { PrismaRepository } from "../../database/repositories/prisma.repository"
 import { AutoUsata, ImmagineAuto, Prisma } from "@prisma/client"
 import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
+import { AutoUsataStatusEnum } from "../enums/autoUsataStatusEnum"
 
 export type AutoUsataWithImmagini = AutoUsata & {
   immagini: ImmagineAuto[]
@@ -72,7 +73,7 @@ export class AutoUsataRepository {
     if (filtri.stato) {
       where.stato = filtri.stato
     } else {
-      where.stato = { not: "VENDUTA" }
+      where.stato = { not: AutoUsataStatusEnum.VENDUTA }
     }
 
     return this.db.autoUsata.findMany({

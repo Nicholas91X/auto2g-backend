@@ -11,6 +11,7 @@ import { UpdateAutoUsataDto } from "../dtos/updateAutoUsata.dto"
 import { ImmagineAutoRepository } from "../repositories/immagineAuto.repository"
 import { UpdateAutoUsataStatoDto } from "../dtos/updateAutoUsataStatus.dto"
 import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
+import { AutoUsataForAdminDto } from "../dtos/autoUsataForAdmin.dto"
 
 @Injectable()
 export class AutoUsataService {
@@ -28,25 +29,42 @@ export class AutoUsataService {
     })
   }
 
-  async findAll(): Promise<AutoUsataDto[]> {
+  async findAll(
+    isAdmin: boolean,
+  ): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
     const auto = await this.autoUsataRepo.findAll()
-    return plainToInstance(AutoUsataDto, auto, {
-      excludeExtraneousValues: true,
-    })
+    if (isAdmin) {
+      return plainToInstance(AutoUsataForAdminDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    } else {
+      return plainToInstance(AutoUsataDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    }
   }
 
-  async findOne(id: number): Promise<AutoUsataDto> {
+  async findOne(
+    id: number,
+    isAdmin: boolean,
+  ): Promise<AutoUsataDto | AutoUsataForAdminDto> {
     const auto = await this.autoUsataRepo.findById(id)
     if (!auto) {
       throw new NotFoundException("Auto usata non trovata.")
     }
-    return plainToInstance(AutoUsataDto, auto, {
-      excludeExtraneousValues: true,
-    })
+    if (isAdmin) {
+      return plainToInstance(AutoUsataForAdminDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    } else {
+      return plainToInstance(AutoUsataDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    }
   }
 
   async update(id: number, dto: UpdateAutoUsataDto): Promise<AutoUsataDto> {
-    await this.findOne(id)
+    await this.findOne(id, true)
     const auto = await this.autoUsataRepo.update(id, dto)
     return plainToInstance(AutoUsataDto, auto, {
       excludeExtraneousValues: true,
@@ -54,7 +72,7 @@ export class AutoUsataService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id)
+    await this.findOne(id, true)
     await this.autoUsataRepo.remove(id)
   }
 
@@ -62,7 +80,7 @@ export class AutoUsataService {
     id: number,
     file: Express.Multer.File,
   ): Promise<AutoUsataDto> {
-    const auto = await this.findOne(id);
+    const auto = await this.findOne(id, true);
 
     const imagePath = await this.storageService.upload(
       file,
@@ -72,7 +90,7 @@ export class AutoUsataService {
 
     await this.immagineAutoRepo.create(imagePath, id);
 
-    return this.findOne(id);
+    return this.findOne(id, true);
   }
 
   async deleteImmagine(autoId: number, immagineId: number): Promise<void> {
@@ -103,7 +121,7 @@ export class AutoUsataService {
     id: number,
     dto: UpdateAutoUsataStatoDto,
   ): Promise<AutoUsataDto> {
-    await this.findOne(id);
+    await this.findOne(id, true);
     const autoAggiornata = await this.autoUsataRepo.update(id, {
       stato: dto.stato,
     });
@@ -112,11 +130,19 @@ export class AutoUsataService {
     });
   }
 
-  async findAllFiltered(filtri: FiltroAutoUsataDto): Promise<AutoUsataDto[]> {
+  async findAllFiltered(
+    filtri: FiltroAutoUsataDto,
+    isAdmin: boolean): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
     const auto = await this.autoUsataRepo.findAllFiltered(filtri);
-    return plainToInstance(AutoUsataDto, auto, {
-      excludeExtraneousValues: true,
-    });
+    if (isAdmin) {
+      return plainToInstance(AutoUsataForAdminDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    } else {
+      return plainToInstance(AutoUsataDto, auto, {
+        excludeExtraneousValues: true,
+      })
+    }
   }
 
   async toggleFlag(

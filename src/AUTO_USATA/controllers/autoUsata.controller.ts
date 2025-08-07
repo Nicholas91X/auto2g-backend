@@ -37,6 +37,7 @@ import { UpdateAutoUsataStatoDto } from "../dtos/updateAutoUsataStatus.dto"
 import { FiltroAutoUsataDto } from "../dtos/filtroAutoUsata.dto"
 import { ExcelService } from "../../shared/services/excel.service"
 import express from "express"
+import { AutoUsataForAdminDto } from "../dtos/autoUsataForAdmin.dto"
 
 @ApiTags("Auto Usata")
 @Controller("auto-usata")
@@ -53,23 +54,79 @@ export class AutoUsataController {
   @ApiResponse({ status: 200, type: [AutoUsataDto] })
   findAllFiltered(
     @Query() filtri: FiltroAutoUsataDto,
-  ): Promise<AutoUsataDto[]> {
-    return this.autoUsataService.findAllFiltered(filtri)
+  ): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
+    return this.autoUsataService.findAllFiltered(filtri, false)
   }
 
   @Get()
   @ApiOperation({ summary: "Recupera la lista di tutte le auto usate" })
   @ApiResponse({ status: 200, type: [AutoUsataDto] })
-  findAll(): Promise<AutoUsataDto[]> {
-    return this.autoUsataService.findAll()
+  findAll(): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
+    return this.autoUsataService.findAll(false)
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Recupera i dettagli di una singola auto usata" })
   @ApiResponse({ status: 200, type: AutoUsataDto })
   @ApiResponse({ status: 404, description: "Auto non trovata" })
-  findOne(@Param("id", ParseIntPipe) id: number): Promise<AutoUsataDto> {
-    return this.autoUsataService.findOne(id)
+  findOne(
+    @Param("id", ParseIntPipe) id: number,
+  ): Promise<AutoUsataDto | AutoUsataForAdminDto> {
+    return this.autoUsataService.findOne(id, false)
+  }
+
+  @Get("admin/filtered")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary:
+      "Recupera la lista di tutte le auto usate con filtri (Solo addetti)",
+  })
+  @ApiResponse({ status: 200, type: [AutoUsataForAdminDto] })
+  findAllFilteredForAdmin(
+    @Query() filtri: FiltroAutoUsataDto,
+  ): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
+    return this.autoUsataService.findAllFiltered(filtri, true)
+  }
+
+  @Get("admin")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Recupera la lista di tutte le auto usate (Solo addetti)",
+  })
+  @ApiResponse({ status: 200, type: [AutoUsataForAdminDto] })
+  findAllForAdmin(): Promise<AutoUsataDto[] | AutoUsataForAdminDto[]> {
+    return this.autoUsataService.findAll(true)
+  }
+
+  @Get("admin/:id")
+  @UseGuards(TokenGuard)
+  @Roles(
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SELLER,
+  )
+  @ApiBearerAuth("bearer")
+  @ApiOperation({
+    summary: "Recupera i dettagli di una singola auto usata (Solo addetti)",
+  })
+  @ApiResponse({ status: 200, type: AutoUsataForAdminDto })
+  @ApiResponse({ status: 404, description: "Auto non trovata" })
+  findOneForAdmin(
+    @Param("id", ParseIntPipe) id: number,
+  ): Promise<AutoUsataDto | AutoUsataForAdminDto> {
+    return this.autoUsataService.findOne(id, true)
   }
 
   @Post()
@@ -261,7 +318,7 @@ export class AutoUsataController {
     @Query() filtri: FiltroAutoUsataDto,
     @Res() res: express.Response,
   ) {
-    const autoList = await this.autoUsataService.findAllFiltered(filtri)
+    const autoList = await this.autoUsataService.findAllFiltered(filtri, true)
 
     const headers = [
       { header: "ID", key: "id", width: 10 },
@@ -269,6 +326,7 @@ export class AutoUsataController {
       { header: "Modello", key: "modello", width: 20 },
       { header: "Targa", key: "targa", width: 15 },
       { header: "Anno", key: "anno", width: 10 },
+      { header: "Costo", key: "costo", width: 15 },
       { header: "Prezzo Vendita", key: "prezzo", width: 15 },
       { header: "Km", key: "km", width: 15 },
       { header: "Stato", key: "stato", width: 15 },
