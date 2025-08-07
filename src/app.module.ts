@@ -7,6 +7,7 @@ import { EmailModule } from "./EMAIL/email.module"
 import { AccountModule } from "./ACCOUNT/account.module"
 import { DatabaseModule } from "./database/database.module"
 import { AutoUsataModule } from "./AUTO_USATA/autoUsata.module"
+import { DashboardModule } from "./DASHBOARD/dashboard.module"
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AutoUsataModule } from "./AUTO_USATA/autoUsata.module"
     EmailModule,
     AccountModule,
     AutoUsataModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
