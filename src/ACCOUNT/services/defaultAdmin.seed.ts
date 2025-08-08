@@ -14,7 +14,8 @@ export class DefaultAdminSeed implements OnApplicationBootstrap {
   }
 
   private async upsertAdmin() {
-    const email = process.env.DEFAULT_ADMIN_EMAIL ?? "romitinicholas91@hotmail.it"
+    const email =
+      process.env.DEFAULT_ADMIN_EMAIL ?? "romitinicholas91@hotmail.it"
     const password = process.env.DEFAULT_ADMIN_PW ?? "nico84397"
     const pwdEncrypted = await EncryptUtils.encrypt(password)
 

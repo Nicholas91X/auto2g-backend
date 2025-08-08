@@ -4,7 +4,8 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode, HttpStatus,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
@@ -12,12 +13,14 @@ import {
   Query,
   Req,
   Res,
-  UploadedFile,
+  UploadedFile, UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common"
 import {
-  ApiBearerAuth, ApiBody, ApiConsumes,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -40,10 +43,15 @@ import AccountService from "../services/account.service"
 
 import { TokenGuard } from "../guards/token.guard"
 import { Roles } from "../decorators/roles.decorator"
-import { FileInterceptor } from "@nestjs/platform-express"
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from "@nestjs/platform-express"
 import { AccountRoleEnum } from "../enums/accountRoleEnum"
 import { CreateAccountDto } from "../dtos/createAccount.dto"
 import { CreateAccountAdminDto } from "../dtos/createAccountAdmin.dto"
+import { CreateSellerDto } from "../dtos/createSeller.dto"
+import { memoryStorage } from "multer"
 
 /**
  * Controller per la gestione degli account utente.
@@ -52,9 +60,7 @@ import { CreateAccountAdminDto } from "../dtos/createAccountAdmin.dto"
 @ApiTags("Account")
 @Controller("account")
 export class AccountController {
-  constructor(
-    private readonly accountService: AccountService,
-  ) {}
+  constructor(private readonly accountService: AccountService) {}
 
   // ---
   // ## Gestione Profilo Utente (Accesso Personale)
@@ -63,10 +69,8 @@ export class AccountController {
   /**
    * Crea un nuovo account utente.
    * Endpoint pubblico utilizzato per la registrazione classica via email/password.
-   * @param req
    * @param dto Dati per la creazione dell'account.
    * @returns I dati dell'account appena creato.
-   * (TESTATO)
    */
   @Post("account")
   @HttpCode(HttpStatus.CREATED)
@@ -76,10 +80,7 @@ export class AccountController {
     description: "Restituisce l'account appena creato",
   })
   @ApiResponse({ status: 400, description: "Dati di input non validi" })
-  async createAccount(
-    @Req() req: Request,
-    @Body() dto: CreateAccountDto,
-  ): Promise<AccountInfoDto> {
+  async createAccount(@Body() dto: CreateAccountDto): Promise<AccountInfoDto> {
     return this.accountService.createAccount(dto)
   }
 
@@ -111,6 +112,32 @@ export class AccountController {
     @Body() dto: CreateAccountAdminDto,
   ): Promise<AccountInfoDto> {
     return this.accountService.createAccountAdmin(dto)
+  }
+
+  /**
+   * Endpoint per una compagnia per registrare un nuovo autista.
+   */
+  @Post()
+  @Roles(AccountRole.ADMIN, AccountRole.SYSTEM_ADMIN)
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: "profilePicture", maxCount: 1 }], {
+      storage: memoryStorage(),
+    }),
+  )
+  @ApiConsumes("multipart/form-data")
+  @ApiOperation({ summary: "Registra un nuovo venditore" })
+  @ApiBody({ type: CreateSellerDto })
+  async createSeller(
+    @Body() createSellerDto: CreateSellerDto,
+    @UploadedFiles()
+    file: {
+      profilePicture?: Express.Multer.File[]
+    },
+  ): Promise<AccountInfoDto> {
+    return this.accountService.createAccountSeller(
+      createSellerDto,
+      file,
+    )
   }
 
   /**
@@ -208,16 +235,29 @@ export class AccountController {
 
   @ApiBearerAuth("bearer")
   @UseGuards(TokenGuard)
-  @Put('profile-picture')
-  @UseInterceptors(FileInterceptor('document'))
-  @Roles(AccountRoleEnum.SELLER, AccountRoleEnum.CUSTOMER, AccountRoleEnum.ADMIN, AccountRoleEnum.SYSTEM_ADMIN)
-  @ApiOperation({ summary: 'Carica la foto profilo' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { document: { type: 'string', format: 'binary' } } } })
-  async uploadProfilePicture(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    const user = (req.user as Account)
-    if (!file) throw new BadRequestException('File del documento mancante.');
-    return this.accountService.uploadProfilePicture(user.id, file);
+  @Put("profile-picture")
+  @UseInterceptors(FileInterceptor("document"))
+  @Roles(
+    AccountRoleEnum.SELLER,
+    AccountRoleEnum.CUSTOMER,
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SYSTEM_ADMIN,
+  )
+  @ApiOperation({ summary: "Carica la foto profilo" })
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: { document: { type: "string", format: "binary" } },
+    },
+  })
+  async uploadProfilePicture(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
+    const user = req.user as Account
+    if (!file) throw new BadRequestException("File del documento mancante.")
+    return this.accountService.uploadProfilePicture(user.id, file)
   }
 
   /**
@@ -583,37 +623,53 @@ export class AccountController {
    * Restituisce l'URL pubblico della foto profilo di un utente.
    * Utile per il frontend per ottenere il link da mostrare in un tag <img>.
    */
-  @Get(':id/profile-picture-url')
-  @Roles(AccountRoleEnum.ADMIN, AccountRoleEnum.SYSTEM_ADMIN, AccountRoleEnum.SELLER, AccountRoleEnum.CUSTOMER)
-  @ApiOperation({ summary: 'Recupera l\'URL pubblico della foto profilo di un utente' })
+  @Get(":id/profile-picture-url")
+  @Roles(
+    AccountRoleEnum.ADMIN,
+    AccountRoleEnum.SYSTEM_ADMIN,
+    AccountRoleEnum.SELLER,
+    AccountRoleEnum.CUSTOMER,
+  )
+  @ApiOperation({
+    summary: "Recupera l'URL pubblico della foto profilo di un utente",
+  })
   async getProfilePictureUrl(
-    @Param('id', ParseIntPipe) accountId: number,
+    @Param("id", ParseIntPipe) accountId: number,
   ): Promise<{ url: string | null }> {
-    const account = await this.accountService.getAccountInfo(accountId);
-    const url = this.accountService.getPublicProfilePictureUrl(account as Account);
+    const account = await this.accountService.getAccountInfo(accountId)
+    const url = this.accountService.getPublicProfilePictureUrl(
+      account as Account,
+    )
 
-    return { url };
+    return { url }
   }
-
 
   /**
    * Restituisce l'URL pubblico della foto profilo di un utente.
    * Utile per il frontend per ottenere il link da mostrare in un tag <img>.
    */
-  @Get(':id/profile-picture')
-  @ApiOperation({ summary: 'Recupera una foto profilo pubblica tramite ID account' })
-  @ApiResponse({ status: 200, description: 'L\'immagine del profilo viene inviata.' })
-  @ApiResponse({ status: 404, description: 'Foto profilo o account non trovato.' })
+  @Get(":id/profile-picture")
+  @ApiOperation({
+    summary: "Recupera una foto profilo pubblica tramite ID account",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "L'immagine del profilo viene inviata.",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Foto profilo o account non trovato.",
+  })
   async getProfilePicture(
-    @Param('id', ParseIntPipe) accountId: number,
+    @Param("id", ParseIntPipe) accountId: number,
     @Res() res: Response,
   ) {
+    const { fileStream, filename, mimetype } =
+      await this.accountService.getProfilePictureStream(accountId)
 
-    const { fileStream, filename, mimetype } = await this.accountService.getProfilePictureStream(accountId);
+    res.setHeader("Content-Type", mimetype)
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`)
 
-    res.setHeader('Content-Type', mimetype);
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-
-    fileStream.pipe(res);
+    fileStream.pipe(res)
   }
 }

@@ -36,7 +36,10 @@ export class SmtpEmailService implements IEmailService {
     }
 
     this.defaultFrom = `"Auto2G" <${user}>`
-    this.frontendBaseUrl = this.configService.get<string>("FRONTEND_BASE_URL", "")
+    this.frontendBaseUrl = this.configService.get<string>(
+      "FRONTEND_BASE_URL",
+      "",
+    )
     if (!this.frontendBaseUrl) {
       this.logger.error(
         "FRONTEND_BASE_URL not configured. Email links may be broken.",
@@ -216,6 +219,31 @@ export class SmtpEmailService implements IEmailService {
         verificationUrl,
       },
     )
+  }
+
+  /**
+   * Invia l'email di benvenuto e setup a un nuovo venditore.
+   * Include la password temporanea e il link per attivare l'account.
+   */
+  async sendSellerSetupEmail(
+    to: string,
+    name: string,
+    temporaryPassword: string,
+    token: string,
+  ): Promise<void> {
+    const setupUrl = `${this.frontendBaseUrl}/seller-setup?token=${token}`;
+
+    await this.sendTemplatedMail(
+      to,
+      "Benvenuto in Auto2G! Attiva il tuo account",
+      "seller-welcome-setup",
+      {
+        name: name,
+        email: to,
+        temporaryPassword: temporaryPassword,
+        setupUrl: setupUrl,
+      },
+    );
   }
 
   /**

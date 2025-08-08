@@ -4,13 +4,16 @@ import {
   Logger,
   NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common';
+} from "@nestjs/common"
 import { JwtService } from "@nestjs/jwt"
 import { Account, AccountRole } from "@prisma/client"
 import { AccountRepository } from "../repositories/account.repository"
 import { JwtAccountPayload } from "../dtos/jwtAccountPayload.dto"
 import { EncryptUtils } from "../../utils/encrypt.utils"
-import { type IEmailService, IEmailServiceToken } from '../../EMAIL/interfaces/email-service.interface';
+import {
+  type IEmailService,
+  IEmailServiceToken,
+} from "../../EMAIL/interfaces/email-service.interface"
 
 /**
  * Servizio per la gestione dell'autenticazione utente.
@@ -55,7 +58,6 @@ export class AuthService {
     this.logger.log(`Utente ${user.email} loggato con successo.`)
     return { token: jwtToken, user: safeUser }
   }
-
 
   /**
    * Contiene tutti i controlli comuni e ripetuti per la validazione di un utente al login.
@@ -127,7 +129,6 @@ export class AuthService {
     return this.jwtService.signAsync(payload)
   }
 
-
   /**
    * Genera un token JWT di breve durata per la conferma dell'email.
    * @param user L'account per cui generare il token.
@@ -198,14 +199,9 @@ export class AuthService {
    * @throws UnauthorizedException Se il token non è valido o scaduto, o il tipo di token è errato.
    * @throws NotFoundException Se l'utente non viene trovato dopo la verifica del token.
    */
-  async verifyUser(
-    token: string,
-  ): Promise<{ token: string; email: string; }> {
+  async verifyUser(token: string): Promise<{ token: string; email: string }> {
     try {
-      const payload = (await this.jwtService.verifyAsync(token)) as {
-        type: string
-        id: number
-      }
+      const payload = await this.jwtService.verifyAsync(token)
 
       if (payload.type !== "confirmation") {
         throw new UnauthorizedException("Tipo di token di conferma non valido.")
@@ -311,25 +307,34 @@ export class AuthService {
   }
 
   async sendPasswordResetToken(email: string): Promise<void> {
-    const account = await this.accountRepository.findByEmail(email);
-    if (!account) return;
+    const account = await this.accountRepository.findByEmail(email)
+    if (!account) return
 
-    const token = await this.generatePasswordResetToken(account);
-    const resetUrl = account.role === AccountRole.CUSTOMER
-      ? `${process.env.FRONTEND_BASE_CUSTOMER_URL}/reset/confirm?token=${token}`
-      : `${process.env.FRONTEND_BASE_URL}/reset/confirm?token=${token}`;
+    const token = await this.generatePasswordResetToken(account)
+    const resetUrl =
+      account.role === AccountRole.CUSTOMER
+        ? `${process.env.FRONTEND_BASE_CUSTOMER_URL}/reset/confirm?token=${token}`
+        : `${process.env.FRONTEND_BASE_URL}/reset/confirm?token=${token}`
 
-    await this.emailService.sendRecoverPassword(email, resetUrl);
+    await this.emailService.sendRecoverPassword(email, resetUrl)
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    const accountId = await this.verifyPasswordResetToken(token);
-    const encrypted = await EncryptUtils.encrypt(newPassword);
-    await this.accountRepository.updateAccount(accountId, { password: encrypted });
+    const accountId = await this.verifyPasswordResetToken(token)
+    const encrypted = await EncryptUtils.encrypt(newPassword)
+    await this.accountRepository.updateAccount(accountId, {
+      password: encrypted,
+    })
 
-    const account = await this.accountRepository.findById(accountId);
-    if (!account) throw new NotFoundException("Account non trovato dopo il reset della password.");
+    const account = await this.accountRepository.findById(accountId)
+    if (!account)
+      throw new NotFoundException(
+        "Account non trovato dopo il reset della password.",
+      )
 
-    await this.emailService.sendPasswordChangedConfirmation(account.email, account.role);
+    await this.emailService.sendPasswordChangedConfirmation(
+      account.email,
+      account.role,
+    )
   }
 }

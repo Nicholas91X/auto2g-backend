@@ -1,17 +1,20 @@
 import {
-  BadRequestException, Body,
+  BadRequestException,
+  Body,
   Controller,
-  Get, HttpCode,
+  Get,
+  HttpCode,
   HttpStatus,
-  Logger, Post,
+  Logger,
+  Post,
   Query,
-} from '@nestjs/common';
+} from "@nestjs/common"
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger"
 
 import { AuthService } from "../services/auth.service"
 import AccountService from "../services/account.service"
-import { ResetPasswordDto } from '../dtos/resetPassword.dto';
-import { RequestPasswordResetDto } from '../dtos/requestPasswordReset.dto';
+import { ResetPasswordDto } from "../dtos/resetPassword.dto"
+import { RequestPasswordResetDto } from "../dtos/requestPasswordReset.dto"
 
 /**
  * Controller per la gestione dell'autenticazione.
@@ -24,7 +27,6 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly accountService: AccountService,
   ) {}
 
   // ---

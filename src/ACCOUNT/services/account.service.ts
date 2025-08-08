@@ -1,5 +1,6 @@
 import {
-  BadRequestException, ConflictException,
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -18,15 +19,21 @@ import { UpdateEmailDto } from "../dtos/updateEmail.dto"
 import { CreateAccountDto } from "../dtos/createAccount.dto"
 import { CreateAccountAdminDto } from "../dtos/createAccountAdmin.dto"
 import { AuthService } from "./auth.service"
-import { type IEmailService, IEmailServiceToken } from "../../EMAIL/interfaces/email-service.interface"
+import {
+  type IEmailService,
+  IEmailServiceToken,
+} from "../../EMAIL/interfaces/email-service.interface"
 import { EncryptUtils } from "../../utils/encrypt.utils"
-import { type DocumentStorageService, DocumentStorageServiceToken } from "./documentStorage/documentStorage.interface"
+import {
+  type DocumentStorageService,
+  DocumentStorageServiceToken,
+} from "./documentStorage/documentStorage.interface"
 import { ConfigService } from "@nestjs/config"
-import * as fs from 'fs';
-import * as path from 'path';
-import { CreateSellerDto } from '../dtos/createSeller.dto';
+import * as fs from "fs"
+import * as path from "path"
+import { CreateSellerDto } from "../dtos/createSeller.dto"
 
-type AnyCreationDto = CreateAccountDto | CreateAccountAdminDto;
+type AnyCreationDto = CreateAccountDto | CreateAccountAdminDto
 
 /**
  * Servizio per la gestione delle operazioni relative agli account utente.
@@ -36,8 +43,8 @@ type AnyCreationDto = CreateAccountDto | CreateAccountAdminDto;
 @Injectable()
 export default class AccountService {
   private readonly logger = new Logger(AccountService.name)
-  private readonly baseApiUrl: string;
-  private readonly baseUploadDir = path.resolve(process.cwd(), 'uploads');
+  private readonly baseApiUrl: string
+  private readonly baseUploadDir = path.resolve(process.cwd(), "uploads")
 
   constructor(
     private readonly accountRepo: AccountRepository,
@@ -45,9 +52,13 @@ export default class AccountService {
     private readonly configService: ConfigService,
     @Inject(IEmailServiceToken)
     private readonly emailService: IEmailService,
-    @Inject(DocumentStorageServiceToken) private readonly storageService: DocumentStorageService,
+    @Inject(DocumentStorageServiceToken)
+    private readonly storageService: DocumentStorageService,
   ) {
-    this.baseApiUrl = this.configService.get<string>("BACKEND_BASE_URL", "https://auto2g.it");
+    this.baseApiUrl = this.configService.get<string>(
+      "BACKEND_BASE_URL",
+      "https://auto2g.it",
+    )
   }
 
   // ---
@@ -61,46 +72,58 @@ export default class AccountService {
    */
   getPublicProfilePictureUrl(account: Account): string | null {
     if (!account?.profilePicture) {
-      return null;
+      return null
     }
-    return `${this.baseApiUrl}/public/${account.profilePicture}`;
+    return `${this.baseApiUrl}/public/${account.profilePicture}`
   }
 
   /**
    * Recupera il percorso della foto profilo di un utente dal DB e restituisce
    * uno stream leggibile del file fisico, insieme ai suoi metadati.
    */
-  async getProfilePictureStream(
-    accountId: number,
-  ): Promise<{ fileStream: fs.ReadStream; filename: string; mimetype: string }> {
-
-    const account = await this.accountRepo.findById(accountId);
+  async getProfilePictureStream(accountId: number): Promise<{
+    fileStream: fs.ReadStream
+    filename: string
+    mimetype: string
+  }> {
+    const account = await this.accountRepo.findById(accountId)
     if (!account?.profilePicture) {
-      throw new NotFoundException(`Foto profilo non trovata per l'account con ID ${accountId}.`);
+      throw new NotFoundException(
+        `Foto profilo non trovata per l'account con ID ${accountId}.`,
+      )
     }
 
-    const relativePath = account.profilePicture;
-    const absolutePath = path.join(this.baseUploadDir, relativePath);
+    const relativePath = account.profilePicture
+    const absolutePath = path.join(this.baseUploadDir, relativePath)
 
     if (!fs.existsSync(absolutePath)) {
-      this.logger.error(`File non trovato su disco (${absolutePath}) anche se presente nel DB per l'account ${accountId}.`);
-      throw new NotFoundException('Il file della foto profilo non è più disponibile sul server.');
+      this.logger.error(
+        `File non trovato su disco (${absolutePath}) anche se presente nel DB per l'account ${accountId}.`,
+      )
+      throw new NotFoundException(
+        "Il file della foto profilo non è più disponibile sul server.",
+      )
     }
 
-    const filename = path.basename(absolutePath);
-    const mimetype = this.getMimeType(filename);
-    const fileStream = fs.createReadStream(absolutePath);
+    const filename = path.basename(absolutePath)
+    const mimetype = this.getMimeType(filename)
+    const fileStream = fs.createReadStream(absolutePath)
 
-    return { fileStream, filename, mimetype };
+    return { fileStream, filename, mimetype }
   }
 
   private getMimeType(filename: string): string {
-    const extension = path.extname(filename).toLowerCase();
+    const extension = path.extname(filename).toLowerCase()
     switch (extension) {
-      case '.jpg': case '.jpeg': return 'image/jpeg';
-      case '.png': return 'image/png';
-      case '.gif': return 'image/gif';
-      default: return 'application/octet-stream';
+      case ".jpg":
+      case ".jpeg":
+        return "image/jpeg"
+      case ".png":
+        return "image/png"
+      case ".gif":
+        return "image/gif"
+      default:
+        return "application/octet-stream"
     }
   }
 
@@ -108,10 +131,10 @@ export default class AccountService {
    * Crea un nuovo account utente con ruolo CUSTOMER.
    */
   async createAccount(dto: CreateAccountDto): Promise<AccountInfoDto> {
-    await this._validateCreationPrerequisites(dto);
+    await this._validateCreationPrerequisites(dto)
 
     try {
-      const encryptedPassword = await EncryptUtils.encrypt(dto.password);
+      const encryptedPassword = await EncryptUtils.encrypt(dto.password)
 
       const newAccount = await this.accountRepo.createAccount({
         email: dto.email,
@@ -120,33 +143,65 @@ export default class AccountService {
         phoneNumber: dto.phoneNumber,
         password: encryptedPassword,
         role: AccountRole.CUSTOMER,
-        profilePicture: null
-      });
+        profilePicture: null,
+      })
 
-      const isCustomer = newAccount.role === AccountRole.CUSTOMER;
-      const verificationToken = await this.authService.generateRegistrationConfirmToken(newAccount);
+      const isCustomer = newAccount.role === AccountRole.CUSTOMER
+      const verificationToken =
+        await this.authService.generateRegistrationConfirmToken(newAccount)
       try {
-        this.logger.log(`Tentativo di invio mail di conferma per account ${newAccount.id}`);
-        await this.emailService.sendVerificationEmail(dto.email, verificationToken, isCustomer);
-        this.logger.log(`Invio mail di conferma per account ${newAccount.id} avvenuto con successo`);
+        this.logger.log(
+          `Tentativo di invio mail di conferma per account ${newAccount.id}`,
+        )
+        await this.emailService.sendVerificationEmail(
+          dto.email,
+          verificationToken,
+          isCustomer,
+        )
+        this.logger.log(
+          `Invio mail di conferma per account ${newAccount.id} avvenuto con successo`,
+        )
       } catch (error) {
-        this.logger.error(`Errore durante l'invio mail di conferma per account ${newAccount.id}`, error.stack);
+        this.logger.error(
+          `Errore durante l'invio mail di conferma per account ${newAccount.id}`,
+          error.stack,
+        )
       }
 
-      this.logger.log(`Account CUSTOMER creato con ID: ${newAccount.id}.`);
-      return this.mapToAccountInfoDto(newAccount);
-
+      this.logger.log(`Account CUSTOMER creato con ID: ${newAccount.id}.`)
+      return this.mapToAccountInfoDto(newAccount)
     } catch (error) {
-      this.logger.error("Errore durante la creazione dell'account CUSTOMER", error.stack);
-      throw new InternalServerErrorException("Impossibile creare l'account.");
+      this.logger.error(
+        "Errore durante la creazione dell'account CUSTOMER",
+        error.stack,
+      )
+      throw new InternalServerErrorException("Impossibile creare l'account.")
     }
   }
 
   /**
    * Crea un nuovo account utente con ruolo DRIVER.
    */
-  async createAccountDriver(dto: CreateSellerDto, encryptedPassword: string, profilePicturePath: string | null): Promise<Account> {
-    await this._validateCreationPrerequisites(dto);
+  async createAccountSeller(
+    dto: CreateSellerDto,
+    file?: { profilePicture?: Express.Multer.File[] },
+  ): Promise<AccountInfoDto> {
+    await this._validateCreationPrerequisites(dto)
+
+    const { tempPw, encryptedPw } =
+      await EncryptUtils.generateTempEncryptedPassword()
+    const uploadedFilePaths: string[] = []
+
+    if (file?.profilePicture?.[0]) {
+      const path = await this.storageService.upload(
+        file.profilePicture[0],
+        ["profile-pictures"],
+        `account-${dto.email}`,
+      )
+      uploadedFilePaths.push(path)
+    }
+
+    const profilePicturePath = uploadedFilePaths.find(p => p.includes("profile-pictures"));
 
     try {
       const newAccount = await this.accountRepo.createAccount({
@@ -154,28 +209,43 @@ export default class AccountService {
         name: dto.name,
         surname: dto.surname,
         phoneNumber: dto.phoneNumber,
-        password: encryptedPassword,
+        password: encryptedPw,
         role: AccountRole.SELLER,
-        profilePicture: profilePicturePath,
-      });
+        profilePicture: profilePicturePath || null,
+      })
 
-      this.logger.log(`Account SELLER creato con ID: ${newAccount.id}.`);
-      return newAccount;
+      const setupToken =
+        await this.authService.generateRegistrationConfirmToken(newAccount)
 
+      await this.emailService.sendSellerSetupEmail(
+        newAccount.email,
+        newAccount.name,
+        tempPw,
+        setupToken,
+      )
+
+      this.logger.log(`Account SELLER creato con ID: ${newAccount.id}.`)
+      return this.mapToAccountInfoDto(newAccount)
     } catch (error) {
-      this.logger.error("Errore durante la creazione dell'account SELLER", error.stack);
-      throw new InternalServerErrorException("Impossibile creare l'account.");
+      this.logger.error(
+        "Errore durante la creazione dell'account SELLER",
+        error.stack,
+      )
+      throw new InternalServerErrorException("Impossibile creare l'account.")
     }
   }
 
   /**
    * Crea un nuovo account amministrativo.
    */
-  async createAccountAdmin(dto: CreateAccountAdminDto): Promise<AccountInfoDto> {
+  async createAccountAdmin(
+    dto: CreateAccountAdminDto,
+  ): Promise<AccountInfoDto> {
     await this._validateCreationPrerequisites(dto)
 
     try {
-      const { tempPw, encryptedPw } = await EncryptUtils.generateTempEncryptedPassword();
+      const { tempPw, encryptedPw } =
+        await EncryptUtils.generateTempEncryptedPassword()
 
       const newAdminAccount = await this.accountRepo.createAccount({
         email: dto.email,
@@ -184,17 +254,27 @@ export default class AccountService {
         phoneNumber: dto.phoneNumber,
         password: encryptedPw,
         role: AccountRole.ADMIN,
-        profilePicture: null
-      });
+        profilePicture: null,
+      })
 
-      const verificationToken = await this.authService.generateRegistrationConfirmToken(newAdminAccount);
-      await this.emailService.sendAdminAccountSetup(dto.email, tempPw, verificationToken);
+      const verificationToken =
+        await this.authService.generateRegistrationConfirmToken(newAdminAccount)
+      await this.emailService.sendAdminAccountSetup(
+        dto.email,
+        tempPw,
+        verificationToken,
+      )
 
-      this.logger.log(`Account ADMIN creato con ID: ${newAdminAccount.id}.`);
-      return this.mapToAccountInfoDto(newAdminAccount);
+      this.logger.log(`Account ADMIN creato con ID: ${newAdminAccount.id}.`)
+      return this.mapToAccountInfoDto(newAdminAccount)
     } catch (error) {
-      this.logger.error("Errore durante la creazione dell'account ADMIN", error.stack);
-      throw new InternalServerErrorException("Impossibile creare l'account amministratore.");
+      this.logger.error(
+        "Errore durante la creazione dell'account ADMIN",
+        error.stack,
+      )
+      throw new InternalServerErrorException(
+        "Impossibile creare l'account amministratore.",
+      )
     }
   }
 
@@ -204,11 +284,15 @@ export default class AccountService {
    * Esegue i controlli preliminari comuni a tutte le creazioni di account.
    * @param dto Il DTO di creazione contenente email e consensi.
    */
-  private async _validateCreationPrerequisites(dto: AnyCreationDto): Promise<void> {
-    const existingAccount = await this.accountRepo.findByEmail(dto.email);
+  private async _validateCreationPrerequisites(
+    dto: AnyCreationDto,
+  ): Promise<void> {
+    const existingAccount = await this.accountRepo.findByEmail(dto.email)
     if (existingAccount) {
       this.logger.error(`Un account con l'email '${dto.email}' esiste già.`)
-      throw new ConflictException(`Un account con l'email '${dto.email}' esiste già.`);
+      throw new ConflictException(
+        `Un account con l'email '${dto.email}' esiste già.`,
+      )
     }
   }
 
@@ -272,7 +356,7 @@ export default class AccountService {
 
     try {
       const updatedAccount = await this.accountRepo.updateAccount(id, {
-        profilePicture: profilePicture
+        profilePicture: profilePicture,
       })
       this.logger.log(`Foto profilo account ${id} aggiornato.`)
       return this.mapToAccountInfoDto(updatedAccount)
@@ -307,7 +391,10 @@ export default class AccountService {
       })
       try {
         this.logger.log(`Tentativo di invio mail a ${dto.newEmail}`)
-        await this.emailService.sendEmailChangedConfirmation(dto.newEmail, updatedAccount.role)
+        await this.emailService.sendEmailChangedConfirmation(
+          dto.newEmail,
+          updatedAccount.role,
+        )
         this.logger.log(`Invio mail a ${dto.newEmail} avvenuto con successo`)
       } catch (error) {
         this.logger.error(`Invio mail a ${dto.newEmail} fallito`)
@@ -316,7 +403,7 @@ export default class AccountService {
       this.logger.log(`Email account ${id} aggiornata a ${dto.newEmail}.`)
       return this.mapToAccountInfoDto(updatedAccount)
     } catch (error) {
-      if ((error as any).code === "P2002") {
+      if (error.code === "P2002") {
         throw new BadRequestException("Questa email è già in uso.")
       }
       this.logger.error(
@@ -352,7 +439,9 @@ export default class AccountService {
     }
 
     if (!account.password) {
-      this.logger.error(`Questo account ${id} non consente l'accesso tramite password o non ne ha una impostata.`)
+      this.logger.error(
+        `Questo account ${id} non consente l'accesso tramite password o non ne ha una impostata.`,
+      )
       throw new BadRequestException(
         "Questo account non consente l'accesso tramite password o non ne ha una impostata.",
       )
@@ -363,7 +452,9 @@ export default class AccountService {
       account.password,
     )
     if (!passwordMatch) {
-      this.logger.error(`La password attuale inserita da Account ${id} non è corretta.`)
+      this.logger.error(
+        `La password attuale inserita da Account ${id} non è corretta.`,
+      )
       throw new BadRequestException("La password attuale non è corretta.")
     }
 
@@ -375,7 +466,10 @@ export default class AccountService {
       this.logger.log(`Password account ${id} aggiornata.`)
       try {
         this.logger.log(`Tentativo invio mail a ${account.email}`)
-        await this.emailService.sendPasswordChangedConfirmation(account.email, account.role)
+        await this.emailService.sendPasswordChangedConfirmation(
+          account.email,
+          account.role,
+        )
         this.logger.log(`Invio mail a ${account.email} avvenuto con successo`)
       } catch (error) {
         this.logger.error(`Invio mail a ${account.email} fallito.`)
@@ -409,7 +503,9 @@ export default class AccountService {
 
     try {
       await this.accountRepo.updateAccount(requestingUser.id, { active: false })
-      this.logger.log(`Account ${requestingUser.id} disattivato (auto-cancellazione).`)
+      this.logger.log(
+        `Account ${requestingUser.id} disattivato (auto-cancellazione).`,
+      )
     } catch (error) {
       this.logger.error(
         `Errore inatteso durante l'auto-disattivazione dell'account ${requestingUser.id}`,
@@ -422,13 +518,12 @@ export default class AccountService {
   }
 
   async deleteAccountPhysically(accountId: number): Promise<Account> {
-    return await this.accountRepo.deletePhysically(accountId);
+    return await this.accountRepo.deletePhysically(accountId)
   }
 
   // ---
   // ## Gestione Account (Funzionalità Admin)
   // ---
-
 
   /**
    * Recupera un elenco di tutti gli account nel sistema.
@@ -570,7 +665,9 @@ export default class AccountService {
     ) {
       const activeAdmins = await this.accountRepo.countActiveAdmins()
       if (activeAdmins <= 1 && targetAccount.role === AccountRole.ADMIN) {
-        this.logger.error("Impossibile disabilitare l'unico amministratore attivo rimasto.")
+        this.logger.error(
+          "Impossibile disabilitare l'unico amministratore attivo rimasto.",
+        )
         throw new BadRequestException(
           "Impossibile disabilitare l'unico amministratore attivo rimasto.",
         )
@@ -624,14 +721,18 @@ export default class AccountService {
     // Regole di autorizzazione per la cancellazione dell'account
     if (requestingUser.role === AccountRole.SYSTEM_ADMIN) {
       if (requestingUser.id === targetAccountId) {
-        this.logger.error("L'amministratore di sistema non può cancellare se stesso.")
+        this.logger.error(
+          "L'amministratore di sistema non può cancellare se stesso.",
+        )
         throw new ForbiddenException(
           "L'amministratore di sistema non può cancellare se stesso.",
         )
       }
     } else if (requestingUser.role === AccountRole.ADMIN) {
       if (requestingUser.id === targetAccountId) {
-        this.logger.error("Gli amministratori non possono cancellare loro stessi.")
+        this.logger.error(
+          "Gli amministratori non possono cancellare loro stessi.",
+        )
         throw new ForbiddenException(
           "Gli amministratori non possono cancellare loro stessi.",
         )
@@ -640,14 +741,18 @@ export default class AccountService {
         targetAccount.role === AccountRole.ADMIN ||
         targetAccount.role === AccountRole.SYSTEM_ADMIN
       ) {
-        this.logger.error("Gli amministratori non possono cancellare altri amministratori o amministratori di sistema.")
+        this.logger.error(
+          "Gli amministratori non possono cancellare altri amministratori o amministratori di sistema.",
+        )
         throw new ForbiddenException(
           "Gli amministratori non possono cancellare altri amministratori o amministratori di sistema.",
         )
       }
     } else {
       if (requestingUser.id !== targetAccountId) {
-        this.logger.error(`Account con id ${requestingUser.id} non autorizzato a cancellare questo account ${targetAccountId}.`)
+        this.logger.error(
+          `Account con id ${requestingUser.id} non autorizzato a cancellare questo account ${targetAccountId}.`,
+        )
         throw new ForbiddenException(
           "Non sei autorizzato a cancellare questo account.",
         )
@@ -662,7 +767,9 @@ export default class AccountService {
     ) {
       const activeAdminsCount = await this.accountRepo.countActiveAdmins()
       if (activeAdminsCount <= 1) {
-        this.logger.error("Impossibile cancellare l'ultimo amministratore attivo del sistema.")
+        this.logger.error(
+          "Impossibile cancellare l'ultimo amministratore attivo del sistema.",
+        )
         throw new ForbiddenException(
           "Impossibile cancellare l'ultimo amministratore attivo del sistema.",
         )
@@ -698,40 +805,47 @@ export default class AccountService {
     file: Express.Multer.File,
     driverId?: number,
   ): Promise<AccountInfoDto> {
-    let account;
+    let account
     if (driverId) {
-      account = await this.ensureAccountExists(driverId);
+      account = await this.ensureAccountExists(driverId)
     } else {
-      account = await this.ensureAccountExists(accountId);
+      account = await this.ensureAccountExists(accountId)
     }
 
     const newProfilePicturePath = await this.storageService.upload(
       file,
-      ['profile-pictures'],
-      `account-${account.email}`
-    );
-
+      ["profile-pictures"],
+      `account-${account.email}`,
+    )
 
     try {
       if (driverId) {
         await this.accountRepo.updateAccount(driverId, {
           profilePicture: newProfilePicturePath,
-        });
-        this.logger.log(`Foto profilo per l'account ${driverId} aggiornata nel DB.`);
-        return this.getAccountInfo(driverId);
+        })
+        this.logger.log(
+          `Foto profilo per l'account ${driverId} aggiornata nel DB.`,
+        )
+        return this.getAccountInfo(driverId)
       } else {
         await this.accountRepo.updateAccount(accountId, {
           profilePicture: newProfilePicturePath,
-        });
-        this.logger.log(`Foto profilo per l'account ${accountId} aggiornata nel DB.`);
-        return this.getAccountInfo(accountId);
+        })
+        this.logger.log(
+          `Foto profilo per l'account ${accountId} aggiornata nel DB.`,
+        )
+        return this.getAccountInfo(accountId)
       }
-
     } catch (error) {
-      this.logger.error(`Fallimento aggiornamento DB per la foto profilo dell'account ${accountId}. Avvio rollback del file...`, error.stack);
-      await this.storageService.deleteFile(newProfilePicturePath);
+      this.logger.error(
+        `Fallimento aggiornamento DB per la foto profilo dell'account ${accountId}. Avvio rollback del file...`,
+        error.stack,
+      )
+      await this.storageService.deleteFile(newProfilePicturePath)
 
-      throw new InternalServerErrorException("Impossibile aggiornare la foto profilo. L'operazione è stata annullata.");
+      throw new InternalServerErrorException(
+        "Impossibile aggiornare la foto profilo. L'operazione è stata annullata.",
+      )
     }
   }
 

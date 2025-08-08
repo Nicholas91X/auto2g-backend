@@ -4,8 +4,8 @@ import { Injectable, UnauthorizedException } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import * as fs from "fs"
 import { Request } from "express"
-import { AccountRepository } from '../repositories/account.repository';
-import { JwtAccountPayload } from '../dtos/jwtAccountPayload.dto';
+import { AccountRepository } from "../repositories/account.repository"
+import { JwtAccountPayload } from "../dtos/jwtAccountPayload.dto"
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, "jwt-token") {

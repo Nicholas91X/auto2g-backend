@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta content="telephone=no" name="format-detection" />
+  <title>Benvenuto in DoorToTravel!</title>
+  <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #4a4a4a; margin: 0; padding: 0; background-color: #f6f6f6; }
+      .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; }
+      h2 { color: #4a4a4a; font-weight: 500; }
+      p { margin: 15px 0; color: #555555; }
+      .button { display: inline-block; padding: 12px 25px; margin: 20px 0; background-color: #28a745; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; }
+      .header-logo { display: block; margin: 20px auto; width: 149px; }
+      .credentials-box { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 15px; margin: 20px 0; }
+      .credential-item { margin: 8px 0; color: #4a4a4a; }
+      .highlight { font-weight: bold; color: #dc3545; background-color: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+      .footer { background-color: #e4e8ea; color: #666666; font-size: 12px; padding: 15px 20px; text-align: center; border-radius: 0 0 8px 8px; }
+      .footer a { color: #666666; }
+  </style>
+</head>
+<body>
+<div style="background-color:#f6f6f6; padding: 20px 0;">
+  <table width="100%" cellspacing="0" cellpadding="0" align="center">
+    <tbody>
+    <tr>
+      <td align="center">
+        <table width="600" cellspacing="0" cellpadding="0" bgcolor="#efefef" align="center" style="border-radius: 8px 8px 0 0;">
+          <tbody><tr><td align="center" style="padding: 10px;">
+            <a href="https://doortotravel.com" target="_blank">
+              <img src="https://eeqnhja.stripocdn.email/content/guids/0f50b065-6d0b-4e69-a443-7cc8576b426b/images/logo.png" alt="DoorToTravel Logo" class="header-logo"/>
+            </a>
+          </td></tr></tbody>
+        </table>
+
+        <table width="600" cellspacing="0" cellpadding="0" bgcolor="#ffffff" class="container">
+          <tbody><tr><td align="left" style="padding: 20px 30px;">
+            <h2>Benvenuto in Auto2G, {{name}}!</h2>
+            <p>La tua compagnia ti ha registrato sulla nostra piattaforma. Per iniziare, devi attivare il tuo account e impostare una password personale.</p>
+
+            <div class="credentials-box">
+              <div class="credential-item"><strong>Email:</strong> <span>{{email}}</span></div>
+              <div class="credential-item"><strong>Password Temporanea:</strong> <span class="highlight">{{temporaryPassword}}</span></div>
+            </div>
+
+            <p>Clicca sul pulsante qui sotto per attivare il tuo account. Ti verrà chiesto di usare la password temporanea e di impostarne una nuova e sicura.</p>
+
+            <p style="text-align: center;">
+              <a href="{{setupUrl}}" class="button">Attiva il tuo Account</a>
+            </p>
+
+            <p>Questo link di attivazione scadrà tra 2 ore per motivi di sicurezza.</p>
+            <p>Cordiali saluti,<br/>Il Team di Auto2G</p>
+          </td></tr></tbody>
+        </table>
+
+        <table width="600" cellspacing="0" cellpadding="0" align="center">
+          <tbody><tr><td class="footer">
+            <p>Questo è un messaggio da Auto2G. Per domande, contatta il supporto.</p>
+          </td></tr></tbody>
+        </table>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
